@@ -68,7 +68,7 @@ public abstract class ElementNode extends DSNode {
     }
     
     private ActionResult getHtml() {
-        String html = getElement().html();
+        String html = getElement().outerHtml();
         return new DSActionValues(getHtmlAction).addResult(DSString.valueOf(html));
     }
     
