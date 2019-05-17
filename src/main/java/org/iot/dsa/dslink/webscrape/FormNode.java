@@ -2,8 +2,6 @@ package org.iot.dsa.dslink.webscrape;
 
 import java.util.HashSet;
 import java.util.Set;
-import org.iot.dsa.node.DSElement;
-import org.iot.dsa.node.DSIObject;
 import org.iot.dsa.node.DSInfo;
 import org.iot.dsa.node.DSMap;
 import org.iot.dsa.node.DSString;
@@ -14,48 +12,23 @@ import org.iot.dsa.node.action.DSAction;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class ChildElementNode extends ElementNode {
+public class FormNode extends ChildElementNode {
     
-    private QueryNode parent;
-    private int number;
-    
-    public ChildElementNode(QueryNode parent, int number) {
-        this.parent = parent;
-        this.number = number;
+    public FormNode(QueryNode parent, int number) {
+        super(parent, number);
     }
     
-    public ChildElementNode() {
-        
+    public FormNode() {
+        super();
     }
-    
-    @Override
-    protected void onStarted() {
-        super.onStarted();
-        DSIObject numobj = get("Number");
-        if (numobj instanceof DSElement) {
-            number = ((DSElement) numobj).toInt();
-        }
-    }
-    
     
     @Override
     protected void init() {
-        if (parent == null) {
-            parent = (QueryNode) getParent();
-        }
-        put("Number", number);
-        Element me = getElement();
-        if (me.is("form")) {
-            Elements inputs = getElement().select("input");
-            put("Post Form", makePostFormAction(inputs));
-        }
+        super.init();
+        Elements inputs = getElement().select("input");
+        put("Post Form", makePostFormAction(inputs));
     }
 
-    @Override
-    public Element getElement() {
-        return parent.getElement(number);
-    }
-    
     private DSAction makePostFormAction(Elements inputs) {
         DSAction act = new DSAction() {
             @Override
@@ -64,7 +37,7 @@ public class ChildElementNode extends ElementNode {
             
             @Override
             public ActionResult invoke(DSInfo target, ActionInvocation request) {
-                ((ChildElementNode) target.get()).postForm(request.getParameters());
+                ((FormNode) target.get()).postForm(request.getParameters());
                 return null;
             }
         };

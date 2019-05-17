@@ -64,6 +64,9 @@ public class QueryNode extends DSNode {
             put("CSS Query", query);
             elements = parent.getElement().select(query);
             for (int i=0; i < elements.size(); i++) {
+//                if (getElement(i).is("form")) {
+//                    put(String.valueOf(i), new FormNode(this, i));
+//                }
                 put(String.valueOf(i), new ChildElementNode(this, i));
             }
         }
