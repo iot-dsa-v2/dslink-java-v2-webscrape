@@ -1,10 +1,13 @@
 package org.iot.dsa.dslink.webscrape;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
 import org.iot.dsa.dslink.DSMainNode;
 import org.iot.dsa.node.DSMap;
 import org.iot.dsa.node.DSString;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 /**
  * The main and only node of this link.
@@ -13,7 +16,9 @@ import org.iot.dsa.node.DSString;
  */
 public class MainNode extends DSMainNode implements DocumentFetcher {
     
-    private static MainNode instance;
+//    private static MainNode instance;
+    
+    private WebClient webClient;
 
     // Nodes must support the public no-arg constructor.  Technically this isn't required
     // since there are no other constructors...
@@ -36,13 +41,24 @@ public class MainNode extends DSMainNode implements DocumentFetcher {
                 .setReadOnly(true);
     }
 
-    @Override
-    protected void onStarted() {
-        System.setProperty("ui4j.headless", "true");
-        super.onStarted();
-        instance = this;
-    }
+//    @Override
+//    protected void onStarted() {
+//        super.onStarted();
+////        instance = this;
+//    }
     
+    @Override
+    protected void onStable() {
+        super.onStable();
+//        try {
+//            HtmlPage page = getWebClient().getPage("https://www.bedashboard.com/TenantPortal/");
+//            String text = page.asText();
+//        } catch (FailingHttpStatusCodeException | IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+        
+    }
     
 //    private DSAction makeAddCookieAction() {
 //        DSAction act = new DSAction() {
@@ -76,8 +92,12 @@ public class MainNode extends DSMainNode implements DocumentFetcher {
     }
 
     @Override
-    public Map<String, String> getCookies() {
-        return new HashMap<String, String>();
+    public WebClient getWebClient() {
+        if (webClient == null) {
+            webClient = new WebClient();
+            webClient.setCssErrorHandler(new SilentCssErrorHandler());
+        }
+        return webClient;
     }
     
 //    private DSIObject makeAddLoginFormAction() {

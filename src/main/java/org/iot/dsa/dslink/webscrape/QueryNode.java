@@ -7,14 +7,14 @@ import org.iot.dsa.node.DSString;
 import org.iot.dsa.node.action.ActionInvocation;
 import org.iot.dsa.node.action.ActionResult;
 import org.iot.dsa.node.action.DSAction;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import com.gargoylesoftware.htmlunit.html.DomNode;
+import com.gargoylesoftware.htmlunit.html.DomNodeList;
 
 public class QueryNode extends DSNode {
     
     private ElementNode parent;
     private String query;
-    private Elements elements;
+    private DomNodeList<DomNode> elements;
 
     public QueryNode(ElementNode parent, String query) {
         this.parent = parent;
@@ -62,7 +62,11 @@ public class QueryNode extends DSNode {
         }
         if (query != null) {
             put("CSS Query", query);
-            elements = parent.getElement().select(query);
+            DomNode parentElem = parent.getElement();
+            if (parentElem == null) {
+                return;
+            }
+            elements = parentElem.querySelectorAll(query);
             for (int i=0; i < elements.size(); i++) {
 //                if (getElement(i).is("form")) {
 //                    put(String.valueOf(i), new FormNode(this, i));
@@ -72,7 +76,11 @@ public class QueryNode extends DSNode {
         }
     }
     
-    public Element getElement(int index) {
-        return elements.get(index);
+    public DomNode getElement(int index) {
+        if (elements != null && index < elements.size()) {
+            return elements.get(index);
+        } else {
+            return null;
+        }
     }
 }

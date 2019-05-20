@@ -1,22 +1,19 @@
 package org.iot.dsa.dslink.webscrape;
 
 import java.io.IOException;
-import java.util.Map;
 import org.iot.dsa.node.DSIObject;
 import org.iot.dsa.node.DSMap;
 import org.iot.dsa.node.DSString;
-import org.jsoup.Connection;
-import org.jsoup.Connection.Method;
-import org.jsoup.Connection.Response;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+
 
 public class DocumentNode extends ElementNode implements DocumentFetcher {
     
     protected String url;
-    protected Response response;
-    protected Document document;
+    protected HtmlPage page;
     protected DocumentFetcher parent;
     
     public DocumentNode(DocumentFetcher parent, String url) {
@@ -43,38 +40,25 @@ public class DocumentNode extends ElementNode implements DocumentFetcher {
         }
         parent = (DocumentFetcher) getAncestor(DocumentFetcher.class);
     }
-
+    
     @Override
+    protected void onStable() {
+        super.onStable();
+        init();
+    }
+
+    
     protected void init() {
         if (url != null) {
             put("URL", url);
             try {
-                Connection conn = Jsoup.connect(url).cookies(parent.getCookies());
-                response = conn.method(Method.GET).execute();
-                document = response.parse();
-//                String tmpFileName = "temp/" + System.currentTimeMillis() + ".html";
-//                File tmpFile = new File(tmpFileName);
-//                BufferedWriter w = new BufferedWriter(new FileWriter(tmpFile));
-//                w.write(documentPreJS.toString());
-//                w.close();
-//                System.setProperty("phantomjs.binary.path", "libs/phantomjs.exe");
-//                PhantomJSDriver ghostDriver = new PhantomJSDriver();
-//                try {
-//                    ghostDriver.get(tmpFileName);
-//                    document = Jsoup.parse(ghostDriver.getPageSource());
-//                } finally {
-//                    ghostDriver.quit();
-//                }                
-            } catch (IOException e) {
+                page = getWebClient().getPage(url);
+            } catch (FailingHttpStatusCodeException | IOException e) {
                 warn("", e);
             }
         }
     }
 
-    @Override
-    public Element getElement() {
-        return document;
-    }
 
     @Override
     public void fetchDocument(DSMap parameters) {
@@ -84,8 +68,16 @@ public class DocumentNode extends ElementNode implements DocumentFetcher {
     }
 
     @Override
-    public Map<String, String> getCookies() {
-        return response.cookies();
+    public WebClient getWebClient() {
+        return parent.getWebClient();
     }
 
+    @Override
+    public HtmlElement getElement() {
+        if (page != null) {
+            return page.getDocumentElement();
+        } else {
+            return null;
+        }
+    }
 }
