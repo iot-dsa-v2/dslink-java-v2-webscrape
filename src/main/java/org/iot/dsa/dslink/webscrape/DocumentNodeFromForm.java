@@ -1,20 +1,19 @@
 package org.iot.dsa.dslink.webscrape;
 
-import java.io.IOException;
 import org.iot.dsa.node.DSIObject;
 import org.iot.dsa.node.DSMap;
-import org.iot.dsa.node.DSMap.Entry;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.Connection.Method;
 
 public class DocumentNodeFromForm extends DocumentNode {
     
     private DSMap inputs;
+    private ChildElementNode formParent;
+//    private String button;
     
-    public DocumentNodeFromForm(DocumentFetcher parent, String url, DSMap inputs) {
-        super(parent, url);
+    public DocumentNodeFromForm(ChildElementNode formParent, DSMap inputs) {
+        super(formParent.getDocParent(), "");
         this.inputs = inputs;
+        this.formParent = formParent;
+//        this.button = button;
     }
     
     public DocumentNodeFromForm() {
@@ -28,23 +27,20 @@ public class DocumentNodeFromForm extends DocumentNode {
         if (inputsobj instanceof DSMap) {
             inputs = (DSMap) inputsobj;
         }
+//        DSIObject buttonObj = get("button");
+//        if (buttonObj instanceof DSString) {
+//            button = buttonObj.toString();
+//        }
+        formParent = (ChildElementNode) getAncestor(ChildElementNode.class);
     }
 
     @Override
     protected void init() {
-        if (url != null) {
-            put("URL", url);
+        if (inputs != null) {
+//            put("URL", url);
             put("inputs", inputs.copy());
-            try {
-                Connection conn = Jsoup.connect(url).cookies(parent.getCookies());
-                for (Entry entry: inputs) {
-                    conn.data(entry.getKey(), entry.getValue().toString());
-                }
-                response = conn.method(Method.POST).execute();
-                document = response.parse();
-            } catch (IOException e) {
-                warn("", e);
-            }
+//            put("button", button);
+            windowHandle = formParent.submitForm(inputs);
         }
     }
 

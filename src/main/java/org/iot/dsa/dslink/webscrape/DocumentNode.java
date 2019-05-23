@@ -1,22 +1,18 @@
 package org.iot.dsa.dslink.webscrape;
 
-import java.io.IOException;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.iot.dsa.node.DSIObject;
 import org.iot.dsa.node.DSMap;
 import org.iot.dsa.node.DSString;
-import org.jsoup.Connection;
-import org.jsoup.Connection.Method;
-import org.jsoup.Connection.Response;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.WindowType;
+import org.openqa.selenium.firefox.FirefoxDriver;
+
 
 public class DocumentNode extends ElementNode implements DocumentFetcher {
     
     protected String url;
-    protected Response response;
-    protected Document document;
+    protected String windowHandle;
     protected DocumentFetcher parent;
     
     public DocumentNode(DocumentFetcher parent, String url) {
@@ -43,38 +39,33 @@ public class DocumentNode extends ElementNode implements DocumentFetcher {
         }
         parent = (DocumentFetcher) getAncestor(DocumentFetcher.class);
     }
-
+    
     @Override
+    protected void onStable() {
+        super.onStable();
+        init();
+    }
+
+    
     protected void init() {
         if (url != null) {
             put("URL", url);
             try {
-                Connection conn = Jsoup.connect(url).cookies(parent.getCookies());
-                response = conn.method(Method.GET).execute();
-                document = response.parse();
-//                String tmpFileName = "temp/" + System.currentTimeMillis() + ".html";
-//                File tmpFile = new File(tmpFileName);
-//                BufferedWriter w = new BufferedWriter(new FileWriter(tmpFile));
-//                w.write(documentPreJS.toString());
-//                w.close();
-//                System.setProperty("phantomjs.binary.path", "libs/phantomjs.exe");
-//                PhantomJSDriver ghostDriver = new PhantomJSDriver();
-//                try {
-//                    ghostDriver.get(tmpFileName);
-//                    document = Jsoup.parse(ghostDriver.getPageSource());
-//                } finally {
-//                    ghostDriver.quit();
-//                }                
-            } catch (IOException e) {
+                FirefoxDriver driver = getWebClient();
+                synchronized (driver) {
+                    driver.switchTo().newWindow(WindowType.TAB);
+                    driver.get(url);
+                    driver.manage().timeouts().implicitlyWait(4,
+                        TimeUnit.SECONDS);
+                    windowHandle = driver.getWindowHandle();
+                }
+
+            } catch (Exception e) {
                 warn("", e);
             }
         }
     }
 
-    @Override
-    public Element getElement() {
-        return document;
-    }
 
     @Override
     public void fetchDocument(DSMap parameters) {
@@ -84,8 +75,25 @@ public class DocumentNode extends ElementNode implements DocumentFetcher {
     }
 
     @Override
-    public Map<String, String> getCookies() {
-        return response.cookies();
+    public FirefoxDriver getWebClient() {
+        return parent.getWebClient();
+    }
+    
+    @Override
+    public String getWindowHandle() {
+        return windowHandle;
     }
 
+    @Override
+    public WebElement getElement() {
+        if (windowHandle != null) {
+            FirefoxDriver driver = getWebClient();
+            synchronized (driver) {
+                driver.switchTo().window(windowHandle);
+                return driver.findElementByTagName("html");
+            }
+        } else {
+            return null;
+        }
+    }
 }

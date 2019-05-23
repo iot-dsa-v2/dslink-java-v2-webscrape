@@ -1,12 +1,12 @@
 package org.iot.dsa.dslink.webscrape;
 
-import java.util.Map;
 import org.iot.dsa.node.DSInfo;
 import org.iot.dsa.node.DSMap;
 import org.iot.dsa.node.DSValueType;
 import org.iot.dsa.node.action.ActionInvocation;
 import org.iot.dsa.node.action.ActionResult;
 import org.iot.dsa.node.action.DSAction;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 public interface DocumentFetcher {
     
@@ -29,6 +29,6 @@ public interface DocumentFetcher {
     
     public void fetchDocument(DSMap parameters);
     
-    public Map<String, String> getCookies();
+    public FirefoxDriver getWebClient();
 
 }

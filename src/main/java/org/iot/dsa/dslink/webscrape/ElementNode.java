@@ -9,8 +9,8 @@ import org.iot.dsa.node.action.ActionInvocation;
 import org.iot.dsa.node.action.ActionResult;
 import org.iot.dsa.node.action.DSAction;
 import org.iot.dsa.node.action.DSActionValues;
+import org.openqa.selenium.WebElement;
 import org.iot.dsa.node.action.ActionSpec.ResultType;
-import org.jsoup.nodes.Element;
 
 public abstract class ElementNode extends DSNode {
     private static DSAction getTextAction = makeGetTextAction();
@@ -33,8 +33,9 @@ public abstract class ElementNode extends DSNode {
     
     abstract protected void init();
     
-    public abstract Element getElement();
+    public abstract WebElement getElement();
     
+    public abstract String getWindowHandle();
     
     private static DSAction makeGetTextAction() {
         DSAction act = new DSAction.Parameterless() {
@@ -50,7 +51,11 @@ public abstract class ElementNode extends DSNode {
     }
     
     private ActionResult getText() {
-        String text = getElement().wholeText();
+        WebElement elem = getElement();
+        if (elem == null) {
+            return null;
+        }
+        String text = elem.getText();
         return new DSActionValues(getTextAction).addResult(DSString.valueOf(text));
     }
     
@@ -68,8 +73,12 @@ public abstract class ElementNode extends DSNode {
     }
     
     private ActionResult getHtml() {
-        String html = getElement().outerHtml();
-        return new DSActionValues(getHtmlAction).addResult(DSString.valueOf(html));
+        WebElement elem = getElement();
+        if (elem == null) {
+            return null;
+        }
+        String Html = elem.getAttribute("outerHtml");
+        return new DSActionValues(getHtmlAction).addResult(DSString.valueOf(Html));
     }
     
     private static DSAction makeSelectAction() {
