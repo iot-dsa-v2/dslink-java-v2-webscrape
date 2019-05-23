@@ -6,7 +6,7 @@ import org.iot.dsa.node.DSValueType;
 import org.iot.dsa.node.action.ActionInvocation;
 import org.iot.dsa.node.action.ActionResult;
 import org.iot.dsa.node.action.DSAction;
-import com.gargoylesoftware.htmlunit.WebClient;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 public interface DocumentFetcher {
     
@@ -29,6 +29,6 @@ public interface DocumentFetcher {
     
     public void fetchDocument(DSMap parameters);
     
-    public WebClient getWebClient();
+    public FirefoxDriver getWebClient();
 
 }

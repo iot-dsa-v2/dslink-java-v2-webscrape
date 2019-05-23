@@ -1,5 +1,6 @@
 package org.iot.dsa.dslink.webscrape;
 
+import java.util.List;
 import org.iot.dsa.node.DSIObject;
 import org.iot.dsa.node.DSInfo;
 import org.iot.dsa.node.DSNode;
@@ -7,14 +8,14 @@ import org.iot.dsa.node.DSString;
 import org.iot.dsa.node.action.ActionInvocation;
 import org.iot.dsa.node.action.ActionResult;
 import org.iot.dsa.node.action.DSAction;
-import com.gargoylesoftware.htmlunit.html.DomNode;
-import com.gargoylesoftware.htmlunit.html.DomNodeList;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 public class QueryNode extends DSNode {
     
     private ElementNode parent;
     private String query;
-    private DomNodeList<DomNode> elements;
+    private List<WebElement> elements;
 
     public QueryNode(ElementNode parent, String query) {
         this.parent = parent;
@@ -62,11 +63,11 @@ public class QueryNode extends DSNode {
         }
         if (query != null) {
             put("CSS Query", query);
-            DomNode parentElem = parent.getElement();
+            WebElement parentElem = parent.getElement();
             if (parentElem == null) {
                 return;
             }
-            elements = parentElem.querySelectorAll(query);
+            elements = parentElem.findElements(By.cssSelector(query));
             for (int i=0; i < elements.size(); i++) {
 //                if (getElement(i).is("form")) {
 //                    put(String.valueOf(i), new FormNode(this, i));
@@ -76,7 +77,7 @@ public class QueryNode extends DSNode {
         }
     }
     
-    public DomNode getElement(int index) {
+    public WebElement getElement(int index) {
         if (elements != null && index < elements.size()) {
             return elements.get(index);
         } else {

@@ -28,8 +28,9 @@ dependencies {
     //implementation 'org.jsoup:jsoup:+'
     //implementation 'com.codeborne:phantomjsdriver:+'
     //implementation 'io.webfolder:ui4j-webkit:4.0.0'
-    implementation 'net.sourceforge.htmlunit:htmlunit:2.32'
+    //implementation 'net.sourceforge.htmlunit:htmlunit:2.32'
     //implementation 'org.testfx:openjfx-monocle:+'
+    implementation 'org.apache.commons:commons-lang3:+'
     compile('org.seleniumhq.selenium:selenium-api:+')
     compile('org.seleniumhq.selenium:selenium-remote-driver:+')
 	compile('org.seleniumhq.selenium:selenium-server:+')

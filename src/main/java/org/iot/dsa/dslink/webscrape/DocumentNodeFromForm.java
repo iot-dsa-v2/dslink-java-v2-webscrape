@@ -2,7 +2,6 @@ package org.iot.dsa.dslink.webscrape;
 
 import org.iot.dsa.node.DSIObject;
 import org.iot.dsa.node.DSMap;
-import org.iot.dsa.node.DSString;
 
 public class DocumentNodeFromForm extends DocumentNode {
     
@@ -41,7 +40,7 @@ public class DocumentNodeFromForm extends DocumentNode {
 //            put("URL", url);
             put("inputs", inputs.copy());
 //            put("button", button);
-            page = formParent.submitForm(inputs);
+            windowHandle = formParent.submitForm(inputs);
         }
     }
 

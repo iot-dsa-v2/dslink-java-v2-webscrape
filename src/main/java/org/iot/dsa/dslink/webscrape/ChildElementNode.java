@@ -1,7 +1,7 @@
 package org.iot.dsa.dslink.webscrape;
 
-import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.iot.dsa.node.DSElement;
 import org.iot.dsa.node.DSIObject;
@@ -13,13 +13,9 @@ import org.iot.dsa.node.DSValueType;
 import org.iot.dsa.node.action.ActionInvocation;
 import org.iot.dsa.node.action.ActionResult;
 import org.iot.dsa.node.action.DSAction;
-import com.gargoylesoftware.htmlunit.html.DomElement;
-import com.gargoylesoftware.htmlunit.html.DomNode;
-import com.gargoylesoftware.htmlunit.html.DomNodeList;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 public class ChildElementNode extends ElementNode {
     
@@ -52,23 +48,24 @@ public class ChildElementNode extends ElementNode {
             parent = (QueryNode) getParent();
         }
         put("Number", number);
-        DomNode me = getElement();
-        if (me instanceof HtmlForm) {
-            HtmlForm form = (HtmlForm) me;
-            DomNodeList<HtmlElement> inputs = form.getElementsByTagName(HtmlInput.TAG_NAME);
-//            DomNodeList<DomNode> submitButtons = form.querySelectorAll("[type=submit]");
-//            if (!submitButtons.isEmpty()) {
-                put("Post Form", makePostFormAction(inputs));
-//            }
+        WebElement me = getElement();
+        if (me.getTagName().equals("form")) {
+            List<WebElement> inputs = me.findElements(By.tagName("input"));
+            put("Post Form", makePostFormAction(inputs));
         }
     }
 
     @Override
-    public DomNode getElement() {
+    public WebElement getElement() {
         return parent.getElement(number);
     }
     
-    private DSAction makePostFormAction(DomNodeList<HtmlElement> inputs) {
+    @Override
+    public String getWindowHandle() {
+        return getDocParent().getWindowHandle();
+    }
+    
+    private DSAction makePostFormAction(List<WebElement> inputs) {
         DSAction act = new DSAction() {
             @Override
             public void prepareParameter(DSInfo target, DSMap parameter) {
@@ -83,14 +80,12 @@ public class ChildElementNode extends ElementNode {
         act.addParameter("Document Name", DSValueType.STRING, null);
 //        act.addDefaultParameter("POST URL", DSString.valueOf(getElement().attr("action")), null);
         Set<String> inpNames = new HashSet<String>();
-        for (HtmlElement inputElem: inputs) {
-            if (inputElem instanceof HtmlInput) {
-                HtmlInput input = (HtmlInput) inputElem;
-                String inpName = input.getNameAttribute();
-                if (!inpName.isEmpty() && !inpNames.contains(inpName)) {
-                    act.addDefaultParameter(inpName, DSString.valueOf(input.getValueAttribute()), null);
-                    inpNames.add(inpName);
-                }
+        for (WebElement inputElem: inputs) {
+            String inpName = inputElem.getAttribute("name");
+            if (inpName != null && !inpName.isEmpty() && !inpNames.contains(inpName)) {
+                String inpVal = inputElem.getAttribute("value");
+                act.addDefaultParameter(inpName, DSString.valueOf(inpVal != null ? inpVal : ""), null);
+                inpNames.add(inpName);
             }
         }
 //        buttons = new HashMap<String, DomElement>();
@@ -117,37 +112,38 @@ public class ChildElementNode extends ElementNode {
         put(name, new DocumentNodeFromForm(this, parameters.copy()));
     }
     
-    public DocumentFetcher getDocParent() {
-        return (DocumentFetcher) getAncestor(DocumentFetcher.class);
+    public DocumentNode getDocParent() {
+        return (DocumentNode) getAncestor(DocumentNode.class);
     }
     
-    public HtmlPage submitForm(DSMap inputs) {
-        DomNode me = getElement();
-        if (!(me instanceof HtmlForm)) {
-            return null;
-        }
-        HtmlForm form = (HtmlForm) me;
-        for (Entry entry: inputs) {
-            HtmlInput input = form.getInputByName(entry.getKey());
-            input.setValueAttribute(entry.getValue().toString());
-        }
-        DomElement buttonElem = null;
-        DomNodeList<DomNode> submitButtons = form.querySelectorAll("[type=submit]");
-        for (DomNode dn: submitButtons) {
-            if (dn instanceof DomElement) {
-                buttonElem = (DomElement) dn;
-                break;
+    public String submitForm(DSMap inputs) {
+        WebElement me = getElement();
+        DocumentNode docParent = getDocParent();
+        String windowHandle = docParent.getWindowHandle();
+        FirefoxDriver driver = docParent.getWebClient();
+        synchronized(driver) {
+            driver.switchTo().window(windowHandle);
+            for (Entry entry: inputs) {
+                WebElement input = me.findElement(By.cssSelector("input[name=" + entry.getKey() + "]"));
+                try {
+                    input.sendKeys(entry.getValue().toString());
+                } catch (Exception e) {}
             }
+            me.submit();
+            docParent.init();
+            return windowHandle;
         }
-        if (buttonElem == null) {
-            return null;
-        }
-        try {
-            return buttonElem.click();
-        } catch (IOException e) {
-            warn("", e);
-            return null;
-        }
+//        DomElement buttonElem = null;
+//        DomNodeList<DomNode> submitButtons = form.querySelectorAll("[type=submit]");
+//        for (DomNode dn: submitButtons) {
+//            if (dn instanceof DomElement) {
+//                buttonElem = (DomElement) dn;
+//                break;
+//            }
+//        }
+//        if (buttonElem == null) {
+//            return null;
+//        }
     }
 
 }

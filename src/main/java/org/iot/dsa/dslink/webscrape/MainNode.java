@@ -1,13 +1,15 @@
 package org.iot.dsa.dslink.webscrape;
 
-import java.io.IOException;
+import java.io.File;
+import org.apache.commons.lang3.ArchUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.arch.Processor.Arch;
 import org.iot.dsa.dslink.DSMainNode;
 import org.iot.dsa.node.DSMap;
 import org.iot.dsa.node.DSString;
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.openqa.selenium.firefox.FirefoxBinary;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 
 /**
  * The main and only node of this link.
@@ -18,7 +20,7 @@ public class MainNode extends DSMainNode implements DocumentFetcher {
     
 //    private static MainNode instance;
     
-    private WebClient webClient;
+    private FirefoxDriver webClient;
 
     // Nodes must support the public no-arg constructor.  Technically this isn't required
     // since there are no other constructors...
@@ -32,59 +34,14 @@ public class MainNode extends DSMainNode implements DocumentFetcher {
     @Override
     protected void declareDefaults() {
         super.declareDefaults();
-        //declareDefault("Add Cookie", makeAddCookieAction());
         declareDefault("Fetch Document", DocumentFetcher.makeFetchDocAction());
-//        declareDefault("Add Login Form", makeAddLoginFormAction());
         declareDefault("Help",
                        DSString.valueOf("https://github.com/iot-dsa-v2/dslink-java-v2-example"))
                 .setTransient(true)
                 .setReadOnly(true);
     }
 
-//    @Override
-//    protected void onStarted() {
-//        super.onStarted();
-////        instance = this;
-//    }
-    
-    @Override
-    protected void onStable() {
-        super.onStable();
-//        try {
-//            HtmlPage page = getWebClient().getPage("https://www.bedashboard.com/TenantPortal/");
-//            String text = page.asText();
-//        } catch (FailingHttpStatusCodeException | IOException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-        
-    }
-    
-//    private DSAction makeAddCookieAction() {
-//        DSAction act = new DSAction() {
-//            @Override
-//            public void prepareParameter(DSInfo target, DSMap parameter) {
-//            }
-//            
-//            @Override
-//            public ActionResult invoke(DSInfo target, ActionInvocation request) {
-//                ((MainNode) target.get()).addCookie(request.getParameters());
-//                return null;
-//            }
-//        };
-//        act.addParameter("Name", DSValueType.STRING, null);
-//        act.addParameter("Content", DSValueType.STRING, null);
-//        return act;
-//    }
-//
-//    private void addCookie(DSMap parameters) {
-//        String name = parameters.getString("Name");
-//        String content = parameters.getString("Content");
-//        DSMap cookies = getCookies();
-//        cookies.put(name, content);
-//        put("Cookies", cookies);
-//    }
-    
+
     public void fetchDocument(DSMap parameters) {
         String name = parameters.getString("Name");
         String url = parameters.getString("URL");
@@ -92,53 +49,40 @@ public class MainNode extends DSMainNode implements DocumentFetcher {
     }
 
     @Override
-    public WebClient getWebClient() {
+    public FirefoxDriver getWebClient() {
         if (webClient == null) {
-            webClient = new WebClient();
-            webClient.setCssErrorHandler(new SilentCssErrorHandler());
+            FirefoxBinary firefoxBinary = new FirefoxBinary();
+            firefoxBinary.addCommandLineOptions("--headless");
+            System.setProperty("webdriver.gecko.driver", getGeckoDriverPath());
+            FirefoxOptions firefoxOptions = new FirefoxOptions();
+            firefoxOptions.setBinary(firefoxBinary);
+            webClient = new FirefoxDriver(firefoxOptions);
         }
         return webClient;
     }
     
-//    private DSIObject makeAddLoginFormAction() {
-//        DSAction act = new DSAction() {
-//            
-//            @Override
-//            public void prepareParameter(DSInfo target, DSMap parameter) {
-//            }
-//            
-//            @Override
-//            public ActionResult invoke(DSInfo target, ActionInvocation request) {
-//                ((MainNode) target.get()).addLoginForm(request.getParameters());
-//                return null;
-//            }
-//        };
-//        act.addParameter("Name", DSValueType.STRING, null);
-//        act.addParameter("URL", DSValueType.STRING, null);
-//        act.addParameter("Inputs", new DSMap(), "e.g. {\"UserName\": \"admin\", \"Password\": \"admin1234\"}");
-//        act.addParameter("CSRF Token Name", DSValueType.STRING, null);
-//        return act;
-//    }
-//    
-//    private void addLoginForm(DSMap parameters) {
-//        
-//    }
+    private String getGeckoDriverPath() {
+        String extension = "";
+        String folder;
+        if (SystemUtils.IS_OS_WINDOWS) {
+            if (ArchUtils.getProcessor().getArch().equals(Arch.BIT_64)) {
+                folder = "win64";
+            } else {
+                folder = "win32";
+            }
+            extension = ".exe";
+        } else if (SystemUtils.IS_OS_LINUX) {
+            if (ArchUtils.getProcessor().getArch().equals(Arch.BIT_64)) {
+                folder = "linux64";
+            } else {
+                folder = "linux32";
+            }
+        } else if (SystemUtils.IS_OS_MAC) {
+            folder = "macos";
+        } else {
+            return null;
+        }
+        return "geckodriver" + File.separator + folder + File.separator + "geckodriver" + extension;
+    }
     
-//    public DSMap getCookies() {
-//        DSIObject cookiesObj = get("Cookies");
-//        if (cookiesObj instanceof DSMap) {
-//            return (DSMap) cookiesObj;
-//        } else {
-//            return new DSMap();
-//        }
-//    }
-    
-//    public static DSMap getCookies() {
-//        DSIObject cookiesObj = instance.get("Cookies");
-//        if (cookiesObj instanceof DSMap) {
-//            return ((DSMap) cookiesObj).copy();
-//        } else {
-//            return new DSMap();
-//        }
-//    }
 }

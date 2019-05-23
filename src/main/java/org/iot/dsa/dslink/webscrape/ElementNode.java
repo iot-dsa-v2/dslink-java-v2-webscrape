@@ -9,18 +9,18 @@ import org.iot.dsa.node.action.ActionInvocation;
 import org.iot.dsa.node.action.ActionResult;
 import org.iot.dsa.node.action.DSAction;
 import org.iot.dsa.node.action.DSActionValues;
+import org.openqa.selenium.WebElement;
 import org.iot.dsa.node.action.ActionSpec.ResultType;
-import com.gargoylesoftware.htmlunit.html.DomNode;
 
 public abstract class ElementNode extends DSNode {
     private static DSAction getTextAction = makeGetTextAction();
-    private static DSAction getXmlAction = makeGetXmlAction();
+    private static DSAction getHtmlAction = makeGetHtmlAction();
         
     @Override
     protected void declareDefaults() {
         super.declareDefaults();
         declareDefault("Get Text", getTextAction);
-        declareDefault("Get XML", getXmlAction);
+        declareDefault("Get Html", getHtmlAction);
         declareDefault("Select Elements", makeSelectAction());
         declareDefault("Refresh", makeRefreshAction());
     }
@@ -33,8 +33,9 @@ public abstract class ElementNode extends DSNode {
     
     abstract protected void init();
     
-    public abstract DomNode getElement();
+    public abstract WebElement getElement();
     
+    public abstract String getWindowHandle();
     
     private static DSAction makeGetTextAction() {
         DSAction act = new DSAction.Parameterless() {
@@ -50,34 +51,34 @@ public abstract class ElementNode extends DSNode {
     }
     
     private ActionResult getText() {
-        DomNode elem = getElement();
+        WebElement elem = getElement();
         if (elem == null) {
             return null;
         }
-        String text = elem.asText();
+        String text = elem.getText();
         return new DSActionValues(getTextAction).addResult(DSString.valueOf(text));
     }
     
-    private static DSAction makeGetXmlAction() {
+    private static DSAction makeGetHtmlAction() {
         DSAction act = new DSAction.Parameterless() {
             
             @Override
             public ActionResult invoke(DSInfo target, ActionInvocation request) {
-                return ((ElementNode) target.get()).getXml();
+                return ((ElementNode) target.get()).getHtml();
             }
         };
         act.setResultType(ResultType.VALUES);
-        act.addColumnMetadata("Xml", DSValueType.STRING);
+        act.addColumnMetadata("Html", DSValueType.STRING);
         return act;
     }
     
-    private ActionResult getXml() {
-        DomNode elem = getElement();
+    private ActionResult getHtml() {
+        WebElement elem = getElement();
         if (elem == null) {
             return null;
         }
-        String xml = elem.asXml();
-        return new DSActionValues(getXmlAction).addResult(DSString.valueOf(xml));
+        String Html = elem.getAttribute("outerHtml");
+        return new DSActionValues(getHtmlAction).addResult(DSString.valueOf(Html));
     }
     
     private static DSAction makeSelectAction() {

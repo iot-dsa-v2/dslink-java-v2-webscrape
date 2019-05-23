@@ -1,19 +1,18 @@
 package org.iot.dsa.dslink.webscrape;
 
-import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.iot.dsa.node.DSIObject;
 import org.iot.dsa.node.DSMap;
 import org.iot.dsa.node.DSString;
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.WindowType;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 
 public class DocumentNode extends ElementNode implements DocumentFetcher {
     
     protected String url;
-    protected HtmlPage page;
+    protected String windowHandle;
     protected DocumentFetcher parent;
     
     public DocumentNode(DocumentFetcher parent, String url) {
@@ -52,8 +51,16 @@ public class DocumentNode extends ElementNode implements DocumentFetcher {
         if (url != null) {
             put("URL", url);
             try {
-                page = getWebClient().getPage(url);
-            } catch (FailingHttpStatusCodeException | IOException e) {
+                FirefoxDriver driver = getWebClient();
+                synchronized (driver) {
+                    driver.switchTo().newWindow(WindowType.TAB);
+                    driver.get(url);
+                    driver.manage().timeouts().implicitlyWait(4,
+                        TimeUnit.SECONDS);
+                    windowHandle = driver.getWindowHandle();
+                }
+
+            } catch (Exception e) {
                 warn("", e);
             }
         }
@@ -68,14 +75,23 @@ public class DocumentNode extends ElementNode implements DocumentFetcher {
     }
 
     @Override
-    public WebClient getWebClient() {
+    public FirefoxDriver getWebClient() {
         return parent.getWebClient();
+    }
+    
+    @Override
+    public String getWindowHandle() {
+        return windowHandle;
     }
 
     @Override
-    public HtmlElement getElement() {
-        if (page != null) {
-            return page.getDocumentElement();
+    public WebElement getElement() {
+        if (windowHandle != null) {
+            FirefoxDriver driver = getWebClient();
+            synchronized (driver) {
+                driver.switchTo().window(windowHandle);
+                return driver.findElementByTagName("html");
+            }
         } else {
             return null;
         }
